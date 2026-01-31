@@ -65,7 +65,8 @@ async function initiateOutboundCall(srf, mediaServer, options) {
     const sipAuthUsername = process.env.SIP_AUTH_USERNAME;
     const sipAuthPassword = process.env.SIP_AUTH_PASSWORD;
 
-    const sipUri = 'sip:' + phoneNumber + '@' + sipTrunkHost;
+    const sipTransport = process.env.SIP_TRANSPORT || 'udp';
+    const sipUri = 'sip:' + phoneNumber + '@' + sipTrunkHost + ';transport=' + sipTransport;
 
     logger.info('Dialing SIP URI', {
       callId,

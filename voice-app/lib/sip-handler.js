@@ -15,21 +15,21 @@ const DEFAULT_VOICE_ID = 'JAgnJveGGUh4qy4kh6dF';
 
 // Claude Code-style thinking phrases
 const THINKING_PHRASES = [
-  "Pondering...",
-  "Elucidating...",
-  "Cogitating...",
-  "Ruminating...",
-  "Contemplating...",
-  "Consulting the oracle...",
-  "Summoning knowledge...",
-  "Engaging neural pathways...",
-  "Accessing the mainframe...",
-  "Querying the void...",
-  "Let me think about that...",
-  "Processing...",
-  "Hmm, interesting question...",
-  "One moment...",
-  "Searching my brain...",
+  "Je réfléchis...",
+  "Voyons voir...",
+  "Laissez-moi réfléchir...",
+  "Je cherche...",
+  "Un instant...",
+  "Bonne question...",
+  "Je consulte mes sources...",
+  "Hmm, intéressant...",
+  "Je médite là-dessus...",
+  "Analyse en cours...",
+  "Attendez un peu...",
+  "Je creuse la question...",
+  "Patience...",
+  "Je fouille dans ma mémoire...",
+  "Donnez-moi un moment...",
 ];
 
 function getRandomThinkingPhrase() {
@@ -59,7 +59,7 @@ function extractDialedExtension(req) {
 
 function isGoodbye(transcript) {
   const lower = transcript.toLowerCase().trim();
-  const goodbyePhrases = ['goodbye', 'good bye', 'bye', 'hang up', 'end call', "that's all", 'thats all'];
+  const goodbyePhrases = ['goodbye', 'good bye', 'bye', 'hang up', 'end call', "that's all", 'thats all', 'au revoir', 'salut', 'à bientôt', 'raccroche', 'fin appel', "c'est tout", 'bonne journée', 'bonne soirée', 'ciao'];
   return goodbyePhrases.some(function(phrase) {
     return lower === phrase || lower.includes(' ' + phrase) ||
            lower.startsWith(phrase + ' ') || lower.endsWith(' ' + phrase);
@@ -119,11 +119,19 @@ async function conversationLoop(endpoint, dialog, callUuid, options, deviceConfi
   const devicePrompt = deviceConfig ? deviceConfig.prompt : null;
   const voiceId = (deviceConfig && deviceConfig.voiceId) ? deviceConfig.voiceId : DEFAULT_VOICE_ID;
   const greeting = deviceConfig && deviceConfig.name !== 'Morpheus'
-    ? "Hello! I'm " + deviceConfig.name + ". How can I help you today?"
-    : "Hello! I'm your server. How can I help you today?";
+    ? "Bonjour ! Je suis " + deviceConfig.name + ". Comment puis-je vous aider ?"
+    : "Bonjour ! Comment puis-je vous aider ?";
 
   try {
     console.log('[' + new Date().toISOString() + '] CONVERSATION Starting (session: ' + callUuid + ', device: ' + deviceName + ', voice: ' + voiceId + ')...');
+
+    // Boost output volume by 3dB
+    try {
+      await endpoint.api('uuid_audio', endpoint.uuid + ' start write level 3');
+      console.log('[' + new Date().toISOString() + '] AUDIO Volume boosted +3dB');
+    } catch (e) {
+      console.log('[' + new Date().toISOString() + '] AUDIO Volume boost failed, continuing');
+    }
 
     // Play device-specific greeting with device voice
     const greetingUrl = await ttsService.generateSpeech(greeting, voiceId);
@@ -172,7 +180,7 @@ async function conversationLoop(endpoint, dialog, callUuid, options, deviceConfi
       session.setCaptureEnabled(false);
 
       if (!utterance) {
-        const promptUrl = await ttsService.generateSpeech("I didn't hear anything. Are you still there?", voiceId);
+        const promptUrl = await ttsService.generateSpeech("Je n'ai rien entendu. Êtes-vous toujours là ?", voiceId);
         await endpoint.play(promptUrl);
         continue;
       }
@@ -193,13 +201,13 @@ async function conversationLoop(endpoint, dialog, callUuid, options, deviceConfi
       console.log('[' + new Date().toISOString() + '] WHISPER: "' + transcript + '"');
 
       if (!transcript || transcript.trim().length < 2) {
-        const clarifyUrl = await ttsService.generateSpeech("Sorry, I didn't catch that. Could you repeat?", voiceId);
+        const clarifyUrl = await ttsService.generateSpeech("Désolé, je n'ai pas compris. Pouvez-vous répéter ?", voiceId);
         await endpoint.play(clarifyUrl);
         continue;
       }
 
       if (isGoodbye(transcript)) {
-        const byeUrl = await ttsService.generateSpeech("Goodbye! Call again anytime.", voiceId);
+        const byeUrl = await ttsService.generateSpeech("Au revoir ! N'hésitez pas à rappeler.", voiceId);
         await endpoint.play(byeUrl);
         break;
       }
@@ -244,7 +252,7 @@ async function conversationLoop(endpoint, dialog, callUuid, options, deviceConfi
     }
 
     if (turnCount >= MAX_TURNS) {
-      const maxUrl = await ttsService.generateSpeech("We've been talking for a while. Goodbye!", voiceId);
+      const maxUrl = await ttsService.generateSpeech("Nous avons bien discuté. Au revoir !", voiceId);
       await endpoint.play(maxUrl);
     }
 
@@ -252,7 +260,7 @@ async function conversationLoop(endpoint, dialog, callUuid, options, deviceConfi
     console.error('[' + new Date().toISOString() + '] CONVERSATION Error:', error.message);
     try {
       if (session) session.setCaptureEnabled(false);
-      const errUrl = await ttsService.generateSpeech("Sorry, something went wrong.", voiceId);
+      const errUrl = await ttsService.generateSpeech("Désolé, une erreur s'est produite.", voiceId);
       await endpoint.play(errUrl);
     } catch (e) {}
   } finally {
