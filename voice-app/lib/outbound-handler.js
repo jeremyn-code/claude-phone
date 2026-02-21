@@ -62,8 +62,8 @@ async function initiateOutboundCall(srf, mediaServer, options) {
     const defaultCallerId = callerId || process.env.DEFAULT_CALLER_ID || '+15551234567';
 
     // SIP Authentication for 3CX extension registration
-    const sipAuthUsername = process.env.SIP_AUTH_USERNAME;
-    const sipAuthPassword = process.env.SIP_AUTH_PASSWORD;
+    const sipAuthUsername = process.env.SIP_AUTH_ID || process.env.SIP_AUTH_USERNAME;
+    const sipAuthPassword = process.env.SIP_PASSWORD || process.env.SIP_AUTH_PASSWORD;
 
     const sipTransport = process.env.SIP_TRANSPORT || 'udp';
     const sipUri = 'sip:' + phoneNumber + '@' + sipTrunkHost + ';transport=' + sipTransport;

@@ -51,7 +51,8 @@ function generateFilename(text) {
  * @param {string} voiceId - ElevenLabs voice ID (optional)
  * @returns {Promise<string>} HTTP URL to audio file
  */
-async function generateSpeech(text, voiceId = DEFAULT_VOICE_ID) {
+async function generateSpeech(text, voiceId) {
+  voiceId = voiceId || process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
   const startTime = Date.now();
 
   try {
